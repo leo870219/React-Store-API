@@ -1,11 +1,1 @@
-{
-    "users":[
-        {
-            "id": 1,
-            "nickname": "admin",
-            "email": "admin@asd.com",
-            "password": "admin1",
-            "type": 1
-        }
-    ]
-}
+{"users":[{"id":1,"nickname":"admin","email":"admin@asd.com","password":"admin1","type":1},{"id":2,"email":"10533135@abc.com","password":"334455","nickname":"10533135","type":0}]}

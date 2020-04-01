@@ -28,6 +28,51 @@ const createToken = payload => {
   return jwt.sign(payload, SECRET, { expiresIn });
 };
 
+//註冊新用戶
+server.post("/auth/register", (req, res) => {
+  const { email, password, nickname, type } = req.body;
+
+  //判斷是否資料庫中是否有重複的email或password，如果有顯示錯誤訊息
+  if (isAuthenticated({ email, password })) {
+    const status = 401;
+    const message = "Email and Password already exist";
+    return res.status(status).json({ status, message });
+  }
+
+  //讀取資料庫所有資料，失敗的話返回錯誤訊息
+  fs.readFile(path.join(__dirname, "users.json"), (err, _data) => {
+    if (err) {
+      const status = 401;
+      const message = err;
+      return res.status(status).json({ status, message });
+    }
+
+    //讀取成功，解析資料為一個JS對象
+    const data = JSON.parse(_data.toString());
+
+    //獲取目前資料庫的最後一個ID值
+    const last_item_id = data.users[data.users.length - 1].id;
+
+    //新增使用者
+    data.users.push({ id: last_item_id + 1, email, password, nickname, type });
+    fs.writeFile(
+      path.join(__dirname, "users.json"),
+      JSON.stringify(data),
+      (err, result) => {
+        if (err) {
+          const status = 401;
+          const message = err;
+          res.status(status).json({ status, message });
+          return;
+        }
+      }
+    );
+  });
+
+  //產生一個JWToken給新用戶
+  const jwToken = createToken({ nickname, type, email });
+  res.status(200).json(jwToken);
+});
 server.post("/auth/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -36,7 +81,7 @@ server.post("/auth/login", (req, res) => {
       u => u.email === email && u.password === password
     );
     const { nickname, type } = user;
-    const jwToken = createToken({ nickname, type,email });
+    const jwToken = createToken({ nickname, type, email });
     return res.status(200).json(jwToken);
   } else {
     const status = 401;
