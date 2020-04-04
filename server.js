@@ -17,14 +17,18 @@ const getUsersDb = () => {
 const isAuthenticated = ({ email, password }) => {
   return (
     getUsersDb().users.findIndex(
-      user => user.email === email && user.password === password
+      (user) => user.email === email && user.password === password
     ) !== -1
   );
 };
 
+const isExist = ({ email }) => {
+  return getUsersDb().users.findIndex((user) => user.email === email) !== -1;
+};
+
 const SECRET = "1232RWERFSFASD21321312";
 const expiresIn = "1h";
-const createToken = payload => {
+const createToken = (payload) => {
   return jwt.sign(payload, SECRET, { expiresIn });
 };
 
@@ -33,9 +37,9 @@ server.post("/auth/register", (req, res) => {
   const { email, password, nickname, type } = req.body;
 
   //判斷是否資料庫中是否有重複的email或password，如果有顯示錯誤訊息
-  if (isAuthenticated({ email, password })) {
+  if (isExist(email)) {
     const status = 401;
-    const message = "Email and Password already exist";
+    const message = "Email already exist";
     return res.status(status).json({ status, message });
   }
 
@@ -78,7 +82,7 @@ server.post("/auth/login", (req, res) => {
 
   if (isAuthenticated({ email, password })) {
     const user = getUsersDb().users.find(
-      u => u.email === email && u.password === password
+      (u) => u.email === email && u.password === password
     );
     const { nickname, type } = user;
     const jwToken = createToken({ nickname, type, email });
@@ -91,6 +95,40 @@ server.post("/auth/login", (req, res) => {
   console.log("Login Success");
   return res.status(200).json("Login Success");
 });
+
+server.use("/carts", (req, res, next) => {
+  if (
+    req.headers.authorization === undefined ||
+    req.headers.authorization.split(" ")[0] !== "Bearer"
+  ) {
+    const status = 401;
+    const message = "Error in authorization format";
+    res.status(status).json({ status, message });
+    return;
+  }
+  try {
+    const verifyTokenResult = verifyToken(
+      req.headers.authorization.split(" ")[1]
+    );
+    if (verifyTokenResult instanceof Error) {
+      const status = 401;
+      const message = "Access token not provided";
+      res.status(status).json({ status, message });
+      return;
+    }
+    next();
+  } catch (err) {
+    const status = 401;
+    const message = "Error token is revoked";
+    res.status(status).json({ status, message });
+  }
+});
+
+const verifyToken = (token) => {
+  return jwt.verify(token, SECRET, (err, decode) =>
+    decode !== undefined ? decode : err
+  );
+};
 
 server.use(router);
 server.listen(3003, () => {
