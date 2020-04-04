@@ -131,6 +131,6 @@ const verifyToken = (token) => {
 };
 
 server.use(router);
-server.listen(4000, () => {
+server.listen(3003, () => {
   console.log("JSON Server is running");
 });
