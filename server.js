@@ -7,7 +7,7 @@ const router = jsonServer.router(path.join(__dirname, "db.json"));
 const middlewares = jsonServer.defaults();
 server.use(jsonServer.bodyParser);
 server.use(middlewares);
-
+const port = process.env.PORT||4000;
 const getUsersDb = () => {
   return JSON.parse(
     fs.readFileSync(path.join(__dirname, "users.json"), "UTF-8")
@@ -131,6 +131,6 @@ const verifyToken = (token) => {
 };
 
 server.use(router);
-server.listen(3003, () => {
+server.listen(4000, () => {
   console.log("JSON Server is running");
 });
